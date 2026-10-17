@@ -1,6 +1,10 @@
 #include "../../include/core/MP3File.hpp"
 #include "../../include/exceptions/AudioExceptions.hpp"
 #include "../../include/frame/Layer3Frame.hpp"
+#include "../../include/frame/PCMFrame.hpp"
+#include "../../include/core/PCMFile.hpp"
+#include "../../include/frame/PCMFrame.hpp"
+
 #include <fstream>
 #include <algorithm>
 
@@ -120,4 +124,31 @@ void MP3File::merge(const std::string& path) {
         frames.push_back(std::move(frame));
     }
     other.frames.clear();
+}
+
+std::unique_ptr<PCMFile> MP3File::toPCM() const {
+
+    auto pcmFile = std::make_unique<PCMFile>(44100, 2);
+
+    for (const auto& frame : frames) {
+        const auto* layer3 = dynamic_cast<const Layer3Frame*>(frame.get());
+        if (!layer3) continue;
+
+        const auto& compressedData = layer3->getData();
+
+        // PLACEHOLDER FOR MP3 -> PCM
+        // [DECODER HOOK]: Pass compressedData to an MP3 decoder (e.g., minimp3)
+        // This yields uncompressed 16-bit PCM samples (interleaved L/R)
+        
+        std::vector<int16_t> decodedSamples; 
+        
+        // Decoder integration placeholder
+        // decoder.decode(compressedData.data(), compressedData.size(), decodedSamples);
+
+        // Push uncompressed PCM frame into the PCM file container
+
+        pcmFile->addFrame(std::make_unique<PCMFrame>(std::move(decodedSamples), 44100, 2));
+    }
+
+    return pcmFile;
 }

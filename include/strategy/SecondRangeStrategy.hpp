@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RangeStrategy.hpp"
-#include "../frame/Layer3Frame.hpp"
 
 class SecondRangeStrategy : public RangeStrategy {
 public:
@@ -15,12 +14,9 @@ private:
     size_t secondsToFrameIndex(const std::vector<std::unique_ptr<AudioFrame>>& frames, double seconds, bool roundUp) const {
         double accumulated = 0.0;
         for (size_t i = 0; i < frames.size(); ++i) {
-            const auto* l3 = dynamic_cast<const Layer3Frame*>(frames[i].get());
-            if (l3) {
-                accumulated += l3->getDurationInSeconds();
-                if (accumulated >= seconds) {
-                    return roundUp ? i + 1 : i;
-                }
+            accumulated += frames[i]->getDurationInSeconds();
+            if (accumulated >= seconds) {
+                return roundUp ? i + 1 : i;
             }
         }
         return frames.size();

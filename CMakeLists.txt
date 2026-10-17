@@ -8,10 +8,10 @@ include_directories(include)
 
 set(SOURCES
     main.cpp
-    src/core/AudioFile.cpp
     src/core/MPEGFile.cpp
     src/core/MP3File.cpp
     src/frame/MPEGFrame.cpp
+    src/core/PCMFile.cpp
     src/frame/Layer3Frame.cpp
     src/metadata/ID3v2Tag.cpp
     src/cli/CommandDispatcher.cpp

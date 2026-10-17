@@ -144,7 +144,6 @@ void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
                              (static_cast<uint32_t>(data[flagsOffset + 2]) << 8)  |
                              static_cast<uint32_t>(data[flagsOffset + 3]);
 
-            // Ensure Frames and Bytes flags are set, clear TOC flag since old seek offsets are invalid
             flags |= 0x00000001;
             flags |= 0x00000002;
             flags &= ~0x00000004;

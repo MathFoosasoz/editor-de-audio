@@ -4,9 +4,9 @@
 MPEGFile::MPEGFile(const std::string& path) : AudioFile(path) {}
 
 void MPEGFile::open() {
-    fileStream.open(filename, std::ios::binary);
+    fileStream.open(filePath, std::ios::binary);
     if (!fileStream.is_open()) {
-        throw FileOpenException(filename);
+        throw FileOpenException(filePath);
     }
 }
 
