@@ -19,7 +19,7 @@ void Layer3Frame::parse(std::ifstream& file) {
         throw InvalidHeaderException("Invalid MPEG sync word.");
     }
 
-    uint32_t version = (h >> 19) & 0x3;
+    version = (h >> 19) & 0x3;
     uint32_t layer = (h >> 17) & 0x3;
 
     if (layer != 1) {
@@ -53,16 +53,116 @@ void Layer3Frame::parse(std::ifstream& file) {
     else if (version == 2) srIndex = 1;
     else if (version == 0) srIndex = 2;
 
-    int sr = sampleRates[srIndex][sampleRateIndex];
+    sampleRate = sampleRates[srIndex][sampleRateIndex];
 
-    if (sr == 0) {
+    if (sampleRate == 0) {
         throw InvalidHeaderException("Invalid sample rate.");
     }
 
-    frameSize = (144 * br / sr) + paddingBit;
+    frameSize = (144 * br / sampleRate) + paddingBit;
 
-    file.seekg(frameSize - 4, std::ios::cur);
+    data.resize(frameSize);
+    
+    data[0] = headerBytes[0];
+    data[1] = headerBytes[1];
+    data[2] = headerBytes[2];
+    data[3] = headerBytes[3];
+
+    file.read(reinterpret_cast<char*>(data.data() + 4), frameSize - 4);
     if (!file) {
         throw UnexpectedEOFException();
+    }
+}
+
+double Layer3Frame::getDurationInSeconds() const {
+    int samples = (version == 3) ? 1152 : 576;
+    return static_cast<double>(samples) / sampleRate;
+}
+
+void Layer3Frame::write(std::ofstream& file) const {
+    file.write(reinterpret_cast<const char*>(data.data()), data.size());
+}
+
+const std::vector<uint8_t>& Layer3Frame::getData() const {
+    return data;
+}
+bool Layer3Frame::hasXingHeader() const {
+    if (data.size() < 40) return false;
+
+    uint32_t h = (static_cast<uint8_t>(data[0]) << 24) |
+                 (static_cast<uint8_t>(data[1]) << 16) |
+                 (static_cast<uint8_t>(data[2]) << 8)  |
+                 static_cast<uint8_t>(data[3]);
+
+    uint32_t version = (h >> 19) & 0x3;      // 3 = MPEG-1, 2 = MPEG-2, 0 = MPEG-2.5
+    uint32_t channelMode = (h >> 6) & 0x3;   // 3 = Mono, others = Stereo variants
+
+    size_t xingOffset = 0;
+    if (version == 3) { // MPEG-1
+        xingOffset = (channelMode == 3) ? 21 : 36;
+    } else { // MPEG-2 / 2.5
+        xingOffset = (channelMode == 3) ? 13 : 21;
+    }
+
+    if (xingOffset + 4 <= data.size()) {
+        if ((data[xingOffset] == 'X' && data[xingOffset+1] == 'i' && data[xingOffset+2] == 'n' && data[xingOffset+3] == 'g') ||
+            (data[xingOffset] == 'I' && data[xingOffset+1] == 'n' && data[xingOffset+2] == 'f' && data[xingOffset+3] == 'o')) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
+    if (data.size() < 40) return;
+
+    uint32_t h = (static_cast<uint8_t>(data[0]) << 24) |
+                 (static_cast<uint8_t>(data[1]) << 16) |
+                 (static_cast<uint8_t>(data[2]) << 8)  |
+                 static_cast<uint8_t>(data[3]);
+
+    uint32_t version = (h >> 19) & 0x3;
+    uint32_t channelMode = (h >> 6) & 0x3;
+
+    size_t xingOffset = 0;
+    if (version == 3) {
+        xingOffset = (channelMode == 3) ? 21 : 36;
+    } else {
+        xingOffset = (channelMode == 3) ? 13 : 21;
+    }
+
+    if (xingOffset + 16 <= data.size()) {
+        if ((data[xingOffset] == 'X' && data[xingOffset+1] == 'i' && data[xingOffset+2] == 'n' && data[xingOffset+3] == 'g') ||
+            (data[xingOffset] == 'I' && data[xingOffset+1] == 'n' && data[xingOffset+2] == 'f' && data[xingOffset+3] == 'o')) {
+            
+            size_t flagsOffset = xingOffset + 4;
+            size_t framesOffset = xingOffset + 8;
+            size_t bytesOffset = xingOffset + 12;
+
+            uint32_t flags = (static_cast<uint32_t>(data[flagsOffset]) << 24) |
+                             (static_cast<uint32_t>(data[flagsOffset + 1]) << 16) |
+                             (static_cast<uint32_t>(data[flagsOffset + 2]) << 8)  |
+                             static_cast<uint32_t>(data[flagsOffset + 3]);
+
+            // Ensure Frames and Bytes flags are set, clear TOC flag since old seek offsets are invalid
+            flags |= 0x00000001;
+            flags |= 0x00000002;
+            flags &= ~0x00000004;
+
+            data[flagsOffset]     = (flags >> 24) & 0xFF;
+            data[flagsOffset + 1] = (flags >> 16) & 0xFF;
+            data[flagsOffset + 2] = (flags >> 8) & 0xFF;
+            data[flagsOffset + 3] = flags & 0xFF;
+
+            data[framesOffset]     = (totalFrames >> 24) & 0xFF;
+            data[framesOffset + 1] = (totalFrames >> 16) & 0xFF;
+            data[framesOffset + 2] = (totalFrames >> 8) & 0xFF;
+            data[framesOffset + 3] = totalFrames & 0xFF;
+
+            data[bytesOffset]     = (totalBytes >> 24) & 0xFF;
+            data[bytesOffset + 1] = (totalBytes >> 16) & 0xFF;
+            data[bytesOffset + 2] = (totalBytes >> 8) & 0xFF;
+            data[bytesOffset + 3] = totalBytes & 0xFF;
+        }
     }
 }

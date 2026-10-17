@@ -2,15 +2,20 @@
 #include "../../include/exceptions/AudioExceptions.hpp"
 
 void ID3v2Tag::parse(std::ifstream& file) {
+    std::streampos startPos = file.tellg();
     char header[10];
     file.read(header, 10);
     
     if (!file || file.gcount() < 10) {
-        throw UnexpectedEOFException();
+        file.clear();
+        file.seekg(startPos);
+        return;
     }
 
     if (header[0] != 'I' || header[1] != 'D' || header[2] != '3') {
-        throw InvalidHeaderException("Not a valid ID3v2 tag.");
+        file.clear();
+        file.seekg(startPos);
+        return;
     }
 
     uint32_t size = 0;
@@ -20,9 +25,26 @@ void ID3v2Tag::parse(std::ifstream& file) {
            (header[9] & 0x7F);
 
     tagSize = size + 10;
-    file.seekg(tagSize, std::ios::beg);
+    
+    file.seekg(startPos);
+    rawData.resize(tagSize);
+    file.read(reinterpret_cast<char*>(rawData.data()), tagSize);
+    if (!file) {
+        throw UnexpectedEOFException();
+    }
+    hasTag = true;
+}
+
+void ID3v2Tag::write(std::ofstream& file) const {
+    if (hasTag && !rawData.empty()) {
+        file.write(reinterpret_cast<const char*>(rawData.data()), rawData.size());
+    }
 }
 
 size_t ID3v2Tag::getSize() const {
     return tagSize;
+}
+
+bool ID3v2Tag::exists() const {
+    return hasTag;
 }

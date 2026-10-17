@@ -14,6 +14,7 @@ set(SOURCES
     src/frame/MPEGFrame.cpp
     src/frame/Layer3Frame.cpp
     src/metadata/ID3v2Tag.cpp
+    src/cli/CommandDispatcher.cpp
 )
 
 add_executable(audio_editor ${SOURCES})
