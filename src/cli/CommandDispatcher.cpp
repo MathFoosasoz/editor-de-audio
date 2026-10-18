@@ -10,14 +10,14 @@
 
 CommandDispatcher::CommandDispatcher() {
     commands["parse"] = [](int c, char* v[]) {
-        if (c < 3) throw std::invalid_argument("Usage: parse <input>");
+        if (c < 3) throw std::invalid_argument("Uso: parse <input>");
         auto audio = createAudioFile(v[2]);
         audio->parse();
-        std::cout << "Parsed frames: " << audio->getFrameCount() << "\n";
+        std::cout << "Feito parse em frames: " << audio->getFrameCount() << "\n";
     };
 
     commands["trim-start"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Usage: trim-start <input> <output> <value> [frames|seconds]");
+        if (c < 5) throw std::invalid_argument("Uso: trim-start <input> <output> <value> [frames|seconds]");
         auto audio = createAudioFile(v[2]);
         audio->parse();
         
@@ -33,11 +33,11 @@ CommandDispatcher::CommandDispatcher() {
 
         audio->applyRange(*strategy);
         audio->save(v[3]);
-        std::cout << "Trimmed start and saved to " << v[3] << "\n";
+        std::cout << "Cortado começo e salvo para: " << v[3] << "\n";
     };
 
     commands["trim-end"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Usage: trim-end <input> <output> <value> [frames|seconds]");
+        if (c < 5) throw std::invalid_argument("Uso: trim-end <input> <output> <value> [frames|seconds]");
         auto audio = createAudioFile(v[2]);
         audio->parse();
         
@@ -53,11 +53,11 @@ CommandDispatcher::CommandDispatcher() {
 
         audio->applyRange(*strategy);
         audio->save(v[3]);
-        std::cout << "Trimmed end and saved to " << v[3] << "\n";
+        std::cout << "Cortado e salvo para: " << v[3] << "\n";
     };
 
     commands["extract"] = [](int c, char* v[]) {
-        if (c < 6) throw std::invalid_argument("Usage: extract <input> <output> <start> <duration> [frames|seconds]");
+        if (c < 6) throw std::invalid_argument("Uso: extract <input> <output> <start> <duration> [frames|seconds]");
         auto audio = createAudioFile(v[2]);
         audio->parse();
         
@@ -74,20 +74,20 @@ CommandDispatcher::CommandDispatcher() {
 
         audio->applyRange(*strategy);
         audio->save(v[3]);
-        std::cout << "Extracted range and saved to " << v[3] << "\n";
+        std::cout << "Extraído intervalo e salvo para: " << v[3] << "\n";
     };
 
     commands["merge"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Usage: merge <input1> <input2> <output>");
+        if (c < 5) throw std::invalid_argument("Uso: merge <input1> <input2> <output>");
         auto audio = createAudioFile(v[2]);
         audio->parse();
         audio->merge(v[3]);
         audio->save(v[4]);
-        std::cout << "Merged files and saved to " << v[4] << "\n";
+        std::cout << "Uniu arquivos e salvou para " << v[4] << "\n";
     };
 
     commands["cut"] = [](int c, char* v[]) {
-        if (c < 6) throw std::invalid_argument("Usage: cut <input> <output> <start> <duration> [frames|seconds]");
+        if (c < 6) throw std::invalid_argument("Uso: cut <input> <output> <start> <duration> [frames|seconds]");
         auto audio = createAudioFile(v[2]);
         audio->parse();
         
@@ -98,31 +98,31 @@ CommandDispatcher::CommandDispatcher() {
         CutStrategy strategy(start, duration, unit == "seconds");
         audio->applyCut(strategy);
         audio->save(v[3]);
-        std::cout << "Cut range and saved to " << v[3] << "\n";
+        std::cout << "Cortado e salvo para: " << v[3] << "\n";
     };
 
     commands["bass-boost"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Usage: bass-boost <input> <output> <gain_factor>");
+        if (c < 5) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
         
         auto audio = createAudioFile(v[2]);
         audio->parse();
         
         PCMFile* pcmFile = dynamic_cast<PCMFile*>(audio.get());
         if (!pcmFile) {
-            throw std::invalid_argument("bass-boost is currently only supported for uncompressed PCM (.wav) files.");
+            throw std::invalid_argument("bass-boost é suportado somente para arquivos PCM (.wav).");
         }
         
         float gain = std::stof(v[4]);
         pcmFile->applyBassBoost(gain);
         
         audio->save(v[3]);
-        std::cout << "Applied bass boost (gain " << gain << ") and saved to " << v[3] << "\n";
+        std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[3] << "\n";
     };
 }
 
 void CommandDispatcher::execute(int argc, char* argv[]) {
     if (argc < 2) {
-        throw std::invalid_argument("No command provided.");
+        throw std::invalid_argument("Nenhum comando dado.");
     }
 
     std::string command = argv[1];
@@ -130,6 +130,6 @@ void CommandDispatcher::execute(int argc, char* argv[]) {
     if (it != commands.end()) {
         it->second(argc, argv);
     } else {
-        throw std::invalid_argument("Unknown command: " + command);
+        throw std::invalid_argument("Comando desconhecido: " + command);
     }
 }

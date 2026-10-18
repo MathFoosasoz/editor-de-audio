@@ -35,7 +35,7 @@ void MP3File::parse() {
     }
 
     if (frames.empty()) {
-        throw InvalidHeaderException("No valid MPEG audio frames found in file.");
+        throw InvalidHeaderException("Nenhum frame valido MPEG encontrado no arquivo");
     }
 }
 
@@ -78,7 +78,7 @@ void MP3File::applyRange(const RangeStrategy& strategy) {
     auto [start, end] = strategy.calculateRange(frames);
     
     if (start >= frames.size() || start >= end) {
-        throw InvalidHeaderException("Resulted in an empty audio file or out of bounds range.");
+        throw InvalidHeaderException("Arquivo fica vazio após corte em intervalo (O intervalo pode ser invalido).");
     }
 
     auto startIt = frames.begin() + start;
@@ -108,7 +108,7 @@ void MP3File::applyCut(const RangeStrategy& strategy) {
     frames = std::move(newFrames);
 
     if (frames.empty()) {
-        throw InvalidHeaderException("Cutting resulted in an empty audio file.");
+        throw InvalidHeaderException("Arquivo fica vazio após corte.");
     }
 }
 

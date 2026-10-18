@@ -22,11 +22,11 @@ void PCMFile::parse() {
     char header[44];
     fileStream.read(header, 44);
     if (!fileStream || fileStream.gcount() < 44) {
-        throw InvalidHeaderException("Invalid or incomplete WAV header.");
+        throw InvalidHeaderException("Header de WAV inválido ou incompleto.");
     }
 
     if (std::string(header, 4) != "RIFF" || std::string(header + 8, 4) != "WAVE") {
-        throw InvalidHeaderException("Not a valid WAV file.");
+        throw InvalidHeaderException("Não é um arquivo WAV válido.");
     }
 
     channels = *reinterpret_cast<uint16_t*>(header + 22);
@@ -34,7 +34,7 @@ void PCMFile::parse() {
     uint16_t bitsPerSample = *reinterpret_cast<uint16_t*>(header + 34);
 
     if (bitsPerSample != 16) {
-        throw InvalidHeaderException("Only 16-bit PCM WAV files are supported for now.");
+        throw InvalidHeaderException("Somente arquivos PCM de 16 bits são suportados.");
     }
 
     fileStream.seekg(0, std::ios::end);
@@ -105,7 +105,7 @@ void PCMFile::applyRange(const RangeStrategy& strategy) {
     auto [start, end] = strategy.calculateRange(reinterpret_cast<const std::vector<std::unique_ptr<AudioFrame>>&>(frames));
     
     if (start >= frames.size() || start >= end) {
-        throw InvalidHeaderException("Resulted in an empty PCM audio file or out of bounds range.");
+        throw InvalidHeaderException("Operação resulta em um arquivo PCM inválido (o seu intervalo pode ser inválido).");
     }
 
     auto startIt = frames.begin() + start;
@@ -135,7 +135,7 @@ void PCMFile::applyCut(const RangeStrategy& strategy) {
     frames = std::move(newFrames);
 
     if (frames.empty()) {
-        throw InvalidHeaderException("Cutting resulted in an empty PCM audio file.");
+        throw InvalidHeaderException("Corte resulta em um arquivo PCM vazio.");
     }
 }
 
@@ -166,7 +166,7 @@ std::unique_ptr<MP3File> PCMFile::toMP3() const {
         const auto& pcmSamples = frame->getSamples();
 
         // PLACEHOLDER
-        
+
         std::vector<uint8_t> encodedLayer3Data;
         
         // PLACEHOLDER

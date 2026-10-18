@@ -16,14 +16,14 @@ void Layer3Frame::parse(std::ifstream& file) {
                  static_cast<uint8_t>(headerBytes[3]);
 
     if ((h & 0xFFE00000) != 0xFFE00000) {
-        throw InvalidHeaderException("Invalid MPEG sync word.");
+        throw InvalidHeaderException("MPEG sync word inválida.");
     }
 
     version = (h >> 19) & 0x3;
     uint32_t layer = (h >> 17) & 0x3;
 
     if (layer != 1) {
-        throw InvalidHeaderException("Not an MPEG Layer III frame.");
+        throw InvalidHeaderException("Não é um frame MPEG Layer III.");
     }
 
     uint32_t bitrateIndex = (h >> 12) & 0xF;
@@ -31,7 +31,7 @@ void Layer3Frame::parse(std::ifstream& file) {
     uint32_t paddingBit = (h >> 9) & 0x1;
 
     if (bitrateIndex == 0 || bitrateIndex == 15 || sampleRateIndex == 3) {
-        throw InvalidHeaderException("Invalid bitrate or sample rate index.");
+        throw InvalidHeaderException("Bitrate ou sample index inválidos.");
     }
 
     static const int bitrates[2][16] = {
@@ -56,7 +56,7 @@ void Layer3Frame::parse(std::ifstream& file) {
     sampleRate = sampleRates[srIndex][sampleRateIndex];
 
     if (sampleRate == 0) {
-        throw InvalidHeaderException("Invalid sample rate.");
+        throw InvalidHeaderException("Sample rate inválida.");
     }
 
     frameSize = (144 * br / sampleRate) + paddingBit;

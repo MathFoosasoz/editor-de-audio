@@ -16,19 +16,19 @@ public:
 class FileOpenException : public AudioException {
 public:
     explicit FileOpenException(const std::string& filename)
-        : AudioException("Failed to open file: " + filename) {}
+        : AudioException("Não pode abrir arquivo: " + filename) {}
 };
 
 // Header de um dado arquivo é inválido
 class InvalidHeaderException : public AudioException {
 public:
     explicit InvalidHeaderException(const std::string& message)
-        : AudioException("Invalid header: " + message) {}
+        : AudioException("Header inválido: " + message) {}
 };
 
 // EOF encontrado em momento inesperado
 class UnexpectedEOFException : public AudioException {
 public:
     explicit UnexpectedEOFException()
-        : AudioException("Unexpected end of file reached.") {}
+        : AudioException("EOF inesperado encontrado.") {}
 };

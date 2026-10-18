@@ -23,5 +23,5 @@ inline std::unique_ptr<AudioFile> createAudioFile(const std::string& path) {
     } else if (endsWith(lowerPath, ".mp3")) {
         return std::make_unique<MP3File>(path);
     }
-    throw std::invalid_argument("Unsupported audio file format (supported: .mp3, .wav).");
+    throw std::invalid_argument("Formato de aúdio não suportado (suportados: .mp3, .wav).");
 }
