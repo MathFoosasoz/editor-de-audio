@@ -7,6 +7,7 @@
 
 class RangeStrategy;
 
+// Tipo pai abstrato de arquivo de aúdio
 class AudioFile {
 protected:
     std::string filePath;

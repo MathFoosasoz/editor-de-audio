@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 
+// Metadados IDV3v2
 class ID3v2Tag {
 private:
     size_t tagSize = 0;

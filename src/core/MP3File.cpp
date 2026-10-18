@@ -136,16 +136,13 @@ std::unique_ptr<PCMFile> MP3File::toPCM() const {
 
         const auto& compressedData = layer3->getData();
 
-        // PLACEHOLDER FOR MP3 -> PCM
-        // [DECODER HOOK]: Pass compressedData to an MP3 decoder (e.g., minimp3)
-        // This yields uncompressed 16-bit PCM samples (interleaved L/R)
+        // PLACEHOLDER DE MP3 -> PCM
+        // A gente precisa de uma biblioteca externa para fazer isso
+        // TODO: Adicionar dependências do FFMPEG
         
         std::vector<int16_t> decodedSamples; 
         
-        // Decoder integration placeholder
-        // decoder.decode(compressedData.data(), compressedData.size(), decodedSamples);
-
-        // Push uncompressed PCM frame into the PCM file container
+        // PLACEHOLDER
 
         pcmFile->addFrame(std::make_unique<PCMFrame>(std::move(decodedSamples), 44100, 2));
     }

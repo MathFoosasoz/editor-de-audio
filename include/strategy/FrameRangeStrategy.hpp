@@ -3,6 +3,7 @@
 #include "RangeStrategy.hpp"
 #include <stdexcept>
 
+// Strategy para retornar uma subsessão de um dado aúdio
 class FrameRangeStrategy : public RangeStrategy {
 public:
     enum class Mode { TrimStart, TrimEnd, Extract };

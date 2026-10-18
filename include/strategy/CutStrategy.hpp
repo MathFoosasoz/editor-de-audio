@@ -5,6 +5,7 @@
 #include <utility>
 #include <stdexcept>
 
+// Corta um aúdio em um certo número de segundos. Isso funciona universalmente para qualquer formato de arquivo, já que o parâmetro passado é o tipo abstrato "AudioFrame"
 class CutStrategy : public RangeStrategy {
 private:
     double startParam;

@@ -8,6 +8,10 @@
 
 class MP3File;
 
+// Classe para arquivos do formato PCM. 
+// Para tratamento de aúdio, precisamos converter todos os tipo de aúdio para PCM (que é a forma mais bruta)
+// De se representar aúdio, e posteriormente convertemos de volta de PCM para o formato da nossa escolha.
+// Esse processo de conversão é extremamente complexo (só MP3 <-> PCM são ~20 mil linhas de código), então dependemos do FFMPEG
 class PCMFile : public AudioFile {
 private:
     std::vector<std::unique_ptr<PCMFrame>> frames;

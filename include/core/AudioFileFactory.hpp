@@ -7,6 +7,8 @@
 #include "../core/MP3File.hpp"
 #include "../core/PCMFile.hpp"
 
+// Factory (sem classe) para instanciar um tipo específico de AudioFile dependendo do tipo do arquivo
+// Vale notar que o método createAudioFile propaga as exceções dos construtores dos outros arquivos.
 inline bool endsWith(const std::string& str, const std::string& suffix) {
     if (str.length() < suffix.length()) return false;
     return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;

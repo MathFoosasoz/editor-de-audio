@@ -4,7 +4,7 @@
 
 int main(int argc, char* argv[]) {
  
-    std::cout << "b" << std::endl;
+    //std::cout << "b" << std::endl;
     try {
         CommandDispatcher dispatcher;
         dispatcher.execute(argc, argv);

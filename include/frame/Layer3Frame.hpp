@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 
+// Frame de MP3 (MPEG Layer 3)
 class Layer3Frame : public MPEGFrame {
 private:
     std::vector<uint8_t> data;

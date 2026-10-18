@@ -5,6 +5,7 @@
 #include <utility>
 #include "../frame/AudioFrame.hpp"
 
+// Tipo abstrato para cortar e salvar intervalo
 class RangeStrategy {
 public:
     virtual ~RangeStrategy() = default;

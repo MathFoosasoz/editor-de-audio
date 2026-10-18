@@ -8,7 +8,8 @@
 #include "../metadata/ID3v2Tag.hpp"
 #include "../strategy/RangeStrategy.hpp"
 
-
+// Arquivo especificamente MP3. Vale notar que um arquivo MP3 também pode conter subsessões MP1 e MP2 (embora isso não seja feito em prática)
+// De toda forma, a macroestrutura do mp3 é diferente de mp2 e mp1, então necessita ser uma classe separada
 class MP3File : public MPEGFile {
 private:
     ID3v2Tag id3Tag;

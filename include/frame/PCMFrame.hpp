@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <fstream>
 
+// Frame de PCM
+// Vale notar que isso é um encoding ligeiramente mais avançado do que o PCM, visto que ele tem uma sample rate acoplada com os seus frames
 class PCMFrame : public AudioFrame {
 private:
     std::vector<int16_t> samples;

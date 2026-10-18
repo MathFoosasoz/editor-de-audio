@@ -165,15 +165,11 @@ std::unique_ptr<MP3File> PCMFile::toMP3() const {
     for (const auto& frame : frames) {
         const auto& pcmSamples = frame->getSamples();
 
-        // PLACEHOLDER PCM -> MP3
-        // [ENCODER HOOK]: Compress pcmSamples into an MPEG Layer III bitstream packet
+        // PLACEHOLDER
+        
         std::vector<uint8_t> encodedLayer3Data;
         
-        // Encoder integration placeholder
-        // encoder.encode(pcmSamples.data(), pcmSamples.size(), encodedLayer3Data);
-
-        // Wrap encoded bytes into a Layer3Frame and add to MP3 container
-        // need to add a helper constructor or parser method in Layer3Frame for raw bytes
+        // PLACEHOLDER
     }
 
     return mp3File;
