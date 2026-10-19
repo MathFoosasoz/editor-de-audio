@@ -3,14 +3,14 @@
 #include "include/exceptions/AudioExceptions.hpp"
 
 int main(int argc, char* argv[]) {
- 
-    //std::cout << "b" << std::endl;
+    CommandDispatcher dispatcher;
+
     try {
-        CommandDispatcher dispatcher;
-        dispatcher.execute(argc, argv);
-    } catch (const AudioException& e) {
-        std::cerr << "Audio Error: " << e.what() << "\n";
-        return 1;
+        if (argc < 2) {
+            dispatcher.runInteractive();
+        } else {
+            dispatcher.execute(argc - 1, argv + 1);
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;

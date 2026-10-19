@@ -7,22 +7,43 @@
 #include <iostream>
 #include <stdexcept>
 #include <memory>
+#include <sstream>
 
 CommandDispatcher::CommandDispatcher() {
+    commands["help"] = [this](int c, char* v[]) {
+        std::cout << "\nComandos:\n"
+                  << "  parse <input>\n"
+                  << "  trim-start <input> <output> <val> [frames|seconds]\n"
+                  << "  trim-end <input> <output> <val> [frames|seconds]\n"
+                  << "  extract <input> <output> <start> <duration> [frames|seconds]\n"
+                  << "  cut <input> <output> <start> <duration> [frames|seconds]\n"
+                  << "  merge <input1> <input2> <output>\n"
+                  << "  bass-boost <input> <output> <gain>\n"
+                  << "  help\n"
+                  << "  exit / quit\n\n";
+    };
+
+    commands["exit"] = [this](int c, char* v[]) {
+        running = false;
+        std::cout << "Encerrando o editor de áudio...\n";
+    };
+
+    commands["quit"] = commands["exit"];
+
     commands["parse"] = [](int c, char* v[]) {
-        if (c < 3) throw std::invalid_argument("Uso: parse <input>");
-        auto audio = createAudioFile(v[2]);
+        if (c < 2) throw std::invalid_argument("Uso: parse <input>");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         std::cout << "Feito parse em frames: " << audio->getFrameCount() << "\n";
     };
 
     commands["trim-start"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Uso: trim-start <input> <output> <value> [frames|seconds]");
-        auto audio = createAudioFile(v[2]);
+        if (c < 4) throw std::invalid_argument("Uso: trim-start <input> <output> <value> [frames|seconds]");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         
-        std::string unit = (c > 5) ? v[5] : "frames";
-        double val = std::stod(v[4]);
+        std::string unit = (c > 4) ? v[4] : "frames";
+        double val = std::stod(v[3]);
 
         std::unique_ptr<RangeStrategy> strategy;
         if (unit == "seconds") {
@@ -32,17 +53,17 @@ CommandDispatcher::CommandDispatcher() {
         }
 
         audio->applyRange(*strategy);
-        audio->save(v[3]);
-        std::cout << "Cortado começo e salvo para: " << v[3] << "\n";
+        audio->save(v[2]);
+        std::cout << "Cortado começo e salvo para: " << v[2] << "\n";
     };
 
     commands["trim-end"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Uso: trim-end <input> <output> <value> [frames|seconds]");
-        auto audio = createAudioFile(v[2]);
+        if (c < 4) throw std::invalid_argument("Uso: trim-end <input> <output> <value> [frames|seconds]");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         
-        std::string unit = (c > 5) ? v[5] : "frames";
-        double val = std::stod(v[4]);
+        std::string unit = (c > 4) ? v[4] : "frames";
+        double val = std::stod(v[3]);
 
         std::unique_ptr<RangeStrategy> strategy;
         if (unit == "seconds") {
@@ -52,18 +73,18 @@ CommandDispatcher::CommandDispatcher() {
         }
 
         audio->applyRange(*strategy);
-        audio->save(v[3]);
-        std::cout << "Cortado e salvo para: " << v[3] << "\n";
+        audio->save(v[2]);
+        std::cout << "Cortado e salvo para: " << v[2] << "\n";
     };
 
     commands["extract"] = [](int c, char* v[]) {
-        if (c < 6) throw std::invalid_argument("Uso: extract <input> <output> <start> <duration> [frames|seconds]");
-        auto audio = createAudioFile(v[2]);
+        if (c < 5) throw std::invalid_argument("Uso: extract <input> <output> <start> <duration> [frames|seconds]");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         
-        std::string unit = (c > 6) ? v[6] : "frames";
-        double start = std::stod(v[4]);
-        double duration = std::stod(v[5]);
+        std::string unit = (c > 5) ? v[5] : "frames";
+        double start = std::stod(v[3]);
+        double duration = std::stod(v[4]);
 
         std::unique_ptr<RangeStrategy> strategy;
         if (unit == "seconds") {
@@ -73,38 +94,38 @@ CommandDispatcher::CommandDispatcher() {
         }
 
         audio->applyRange(*strategy);
-        audio->save(v[3]);
-        std::cout << "Extraído intervalo e salvo para: " << v[3] << "\n";
+        audio->save(v[2]);
+        std::cout << "Extraído intervalo e salvo para: " << v[2] << "\n";
     };
 
     commands["merge"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Uso: merge <input1> <input2> <output>");
-        auto audio = createAudioFile(v[2]);
+        if (c < 4) throw std::invalid_argument("Uso: merge <input1> <input2> <output>");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
-        audio->merge(v[3]);
-        audio->save(v[4]);
-        std::cout << "Uniu arquivos e salvou para " << v[4] << "\n";
+        audio->merge(v[2]);
+        audio->save(v[3]);
+        std::cout << "Uniu arquivos e salvou para " << v[3] << "\n";
     };
 
     commands["cut"] = [](int c, char* v[]) {
-        if (c < 6) throw std::invalid_argument("Uso: cut <input> <output> <start> <duration> [frames|seconds]");
-        auto audio = createAudioFile(v[2]);
+        if (c < 5) throw std::invalid_argument("Uso: cut <input> <output> <start> <duration> [frames|seconds]");
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         
-        std::string unit = (c > 6) ? v[6] : "frames";
-        double start = std::stod(v[4]);
-        double duration = std::stod(v[5]);
+        std::string unit = (c > 5) ? v[5] : "frames";
+        double start = std::stod(v[3]);
+        double duration = std::stod(v[4]);
 
         CutStrategy strategy(start, duration, unit == "seconds");
         audio->applyCut(strategy);
-        audio->save(v[3]);
-        std::cout << "Cortado e salvo para: " << v[3] << "\n";
+        audio->save(v[2]);
+        std::cout << "Cortado e salvo para: " << v[2] << "\n";
     };
 
     commands["bass-boost"] = [](int c, char* v[]) {
-        if (c < 5) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
+        if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
         
-        auto audio = createAudioFile(v[2]);
+        auto audio = createAudioFile(v[1]);
         audio->parse();
         
         PCMFile* pcmFile = dynamic_cast<PCMFile*>(audio.get());
@@ -112,24 +133,55 @@ CommandDispatcher::CommandDispatcher() {
             throw std::invalid_argument("bass-boost é suportado somente para arquivos PCM (.wav).");
         }
         
-        float gain = std::stof(v[4]);
+        float gain = std::stof(v[3]);
         pcmFile->applyBassBoost(gain);
         
-        audio->save(v[3]);
-        std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[3] << "\n";
+        audio->save(v[2]);
+        std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
     };
 }
 
 void CommandDispatcher::execute(int argc, char* argv[]) {
-    if (argc < 2) {
+    if (argc < 1) {
         throw std::invalid_argument("Nenhum comando dado.");
     }
 
-    std::string command = argv[1];
+    std::string command = argv[0];
     auto it = commands.find(command);
     if (it != commands.end()) {
         it->second(argc, argv);
     } else {
         throw std::invalid_argument("Comando desconhecido: " + command);
+    }
+}
+
+void CommandDispatcher::runInteractive() {
+    std::cout << "Editor de Áudio: digite 'help' para comandos ou 'quit' para encerrar.\n";
+    std::string line;
+
+    while (running) {
+        std::cout << "audio-editor> ";
+        if (!std::getline(std::cin, line)) break;
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        std::string arg;
+        std::vector<std::string> args;
+        while (ss >> arg) {
+            args.push_back(arg);
+        }
+
+        if (args.empty()) continue;
+
+        std::vector<char*> argv;
+        for (auto& s : args) {
+            argv.push_back(&s[0]);
+        }
+
+        try {
+            execute(static_cast<int>(argv.size()), argv.data());
+        } catch (const std::exception& e) {
+            std::cerr << "Error: " << e.what() << "\n";
+        }
     }
 }
