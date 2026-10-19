@@ -9,11 +9,6 @@
 PCMFile::PCMFile(const std::string& path) : AudioFile(path), sampleRate(44100), channels(2) {}
 PCMFile::PCMFile(int sr, int ch) : AudioFile(""), sampleRate(sr), channels(ch) {}
 
-#include "../../include/core/PCMFile.hpp"
-#include "../../include/exceptions/AudioExceptions.hpp"
-#include <fstream>
-#include <algorithm>
-
 void PCMFile::parse() {
     if (!fileStream.is_open()) {
         open();
