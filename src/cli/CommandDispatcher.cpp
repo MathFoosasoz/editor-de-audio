@@ -123,21 +123,16 @@ CommandDispatcher::CommandDispatcher() {
     };
 
     commands["bass-boost"] = [](int c, char* v[]) {
-        if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
-        
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
-        
-        PCMFile* pcmFile = dynamic_cast<PCMFile*>(audio.get());
-        if (!pcmFile) {
-            throw std::invalid_argument("bass-boost é suportado somente para arquivos PCM (.wav).");
-        }
-        
-        float gain = std::stof(v[3]);
-        pcmFile->applyBassBoost(gain);
-        
-        audio->save(v[2]);
-        std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
+    if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
+    
+    auto audio = createAudioFile(v[1]);
+    audio->parse();
+    
+    float gain = std::stof(v[3]);
+    audio->applyBassBoost(gain);
+    
+    audio->save(v[2]);
+    std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
     };
 }
 

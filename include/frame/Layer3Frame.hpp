@@ -18,4 +18,5 @@ public:
     bool hasXingHeader() const;
     void updateXingHeader(uint32_t totalFrames, uint32_t totalBytes);
     double getDurationInSeconds() const;
+    void setData(std::vector<uint8_t> newData);
 };

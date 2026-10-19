@@ -14,7 +14,6 @@ class MP3File;
 // Esse processo de conversão é extremamente complexo (só MP3 <-> PCM são ~20 mil linhas de código), então dependemos do FFMPEG
 class PCMFile : public AudioFile {
 private:
-    std::vector<std::unique_ptr<PCMFrame>> frames;
     int sampleRate = 44100;
     int channels = 2;
 
@@ -28,9 +27,8 @@ public:
     void applyRange(const RangeStrategy& strategy) override;
     void applyCut(const RangeStrategy& strategy) override;
     void merge(const std::string& path) override;
+    void addFrame(std::unique_ptr<AudioFrame> frame) override;
 
-    const std::vector<std::unique_ptr<PCMFrame>>& getFrames() const;
-    void addFrame(std::unique_ptr<PCMFrame> frame);
     void applyBassBoost(float gainFactor);
 
     std::unique_ptr<MP3File> toMP3() const;

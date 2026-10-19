@@ -17,22 +17,20 @@ public:
     PCMFrame(std::vector<int16_t> s, int sr, int ch) 
         : samples(std::move(s)), sampleRate(sr), channels(ch) {}
 
-    const std::vector<int16_t>& getSamples() const { return samples; }
-    std::vector<int16_t>& getSamples() { return samples; }
+    std::vector<int16_t>& getSamples() override { return samples; }
+    const std::vector<int16_t>& getSamples() const override { return samples; }
     
     int getSampleRate() const { return sampleRate; }
     int getChannels() const { return channels; }
 
-    void parse(std::ifstream& file) override {
-        // implemented here for polymorphism
-    }
+    void parse(std::ifstream& file) override {}
 
     size_t getSize() const override {
         return samples.size() * sizeof(int16_t);
     }
 
     double getDurationInSeconds() const override {
-    if (sampleRate <= 0 || channels <= 0) return 0.0;
-    return static_cast<double>(samples.size()) / (channels * sampleRate);
-}
+        if (sampleRate <= 0 || channels <= 0) return 0.0;
+        return static_cast<double>(samples.size()) / (channels * sampleRate);
+    }
 };

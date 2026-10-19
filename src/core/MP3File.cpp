@@ -1,9 +1,12 @@
+#define MINIMP3_IMPLEMENTATION
+
 #include "../../include/core/MP3File.hpp"
 #include "../../include/exceptions/AudioExceptions.hpp"
 #include "../../include/frame/Layer3Frame.hpp"
 #include "../../include/frame/PCMFrame.hpp"
 #include "../../include/core/PCMFile.hpp"
 #include "../../include/frame/PCMFrame.hpp"
+#include "../../include/3rdparty/minimp3.h"
 
 #include <fstream>
 #include <algorithm>
@@ -125,27 +128,43 @@ void MP3File::merge(const std::string& path) {
     }
     other.frames.clear();
 }
-
 std::unique_ptr<PCMFile> MP3File::toPCM() const {
-
     auto pcmFile = std::make_unique<PCMFile>(44100, 2);
+
+    mp3dec_t mp3d;
+    mp3dec_init(&mp3d);
 
     for (const auto& frame : frames) {
         const auto* layer3 = dynamic_cast<const Layer3Frame*>(frame.get());
         if (!layer3) continue;
 
-        const auto& compressedData = layer3->getData();
-
-        // PLACEHOLDER DE MP3 -> PCM
-        // A gente precisa de uma biblioteca externa para fazer isso
-        // TODO: Adicionar dependências do FFMPEG
+        const auto& data = layer3->getData();
         
-        std::vector<int16_t> decodedSamples; 
-        
-        // PLACEHOLDER
+        mp3dec_frame_info_t info;
+        std::vector<int16_t> pcmSamples(MINIMP3_MAX_SAMPLES_PER_FRAME);
 
-        pcmFile->addFrame(std::make_unique<PCMFrame>(std::move(decodedSamples), 44100, 2));
+        int samplesDecoded = mp3dec_decode_frame(&mp3d, data.data(), static_cast<int>(data.size()), pcmSamples.data(), &info);
+
+        if (samplesDecoded > 0) {
+            pcmSamples.resize(samplesDecoded * info.channels);
+            pcmFile->addFrame(std::make_unique<PCMFrame>(std::move(pcmSamples), info.hz, info.channels));
+        }
     }
 
     return pcmFile;
+}
+
+void MP3File::applyBassBoost(float gain) {
+    
+    auto pcmFile = toPCM();
+    
+    pcmFile->applyBassBoost(gain);
+    
+    auto newMp3File = pcmFile->toMP3();
+    
+    this->frames = std::move(newMp3File->frames);
+}
+
+void MP3File::addFrame(std::unique_ptr<AudioFrame> frame) {
+    frames.push_back(std::move(frame));
 }

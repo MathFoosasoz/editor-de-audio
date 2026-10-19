@@ -3,16 +3,13 @@
 #include "../../include/core/MP3File.hpp"
 #include "../../include/frame/Layer3Frame.hpp"
 #include "../../include/core/MP3File.hpp"
+#include "../3rdparty/lame/lame.h"
+
 #include <fstream>
 #include <algorithm>
 
 PCMFile::PCMFile(const std::string& path) : AudioFile(path), sampleRate(44100), channels(2) {}
 PCMFile::PCMFile(int sr, int ch) : AudioFile(""), sampleRate(sr), channels(ch) {}
-
-#include "../../include/core/PCMFile.hpp"
-#include "../../include/exceptions/AudioExceptions.hpp"
-#include <fstream>
-#include <algorithm>
 
 void PCMFile::parse() {
     if (!fileStream.is_open()) {
@@ -93,16 +90,11 @@ size_t PCMFile::getFrameCount() const {
     return frames.size();
 }
 
-const std::vector<std::unique_ptr<PCMFrame>>& PCMFile::getFrames() const {
-    return frames;
-}
-
-void PCMFile::addFrame(std::unique_ptr<PCMFrame> frame) {
+void PCMFile::addFrame(std::unique_ptr<AudioFrame> frame) {
     frames.push_back(std::move(frame));
 }
-
 void PCMFile::applyRange(const RangeStrategy& strategy) {
-    auto [start, end] = strategy.calculateRange(reinterpret_cast<const std::vector<std::unique_ptr<AudioFrame>>&>(frames));
+    auto [start, end] = strategy.calculateRange(frames);
     
     if (start >= frames.size() || start >= end) {
         throw InvalidHeaderException("Operação resulta em um arquivo PCM inválido (o seu intervalo pode ser inválido).");
@@ -111,18 +103,18 @@ void PCMFile::applyRange(const RangeStrategy& strategy) {
     auto startIt = frames.begin() + start;
     auto endIt = frames.begin() + end;
 
-    std::vector<std::unique_ptr<PCMFrame>> extracted(std::make_move_iterator(startIt), std::make_move_iterator(endIt));
+    std::vector<std::unique_ptr<AudioFrame>> extracted(std::make_move_iterator(startIt), std::make_move_iterator(endIt));
     frames = std::move(extracted);
 }
 
 void PCMFile::applyCut(const RangeStrategy& strategy) {
-    auto [removeStart, removeEnd] = strategy.calculateRange(reinterpret_cast<const std::vector<std::unique_ptr<AudioFrame>>&>(frames));
+    auto [removeStart, removeEnd] = strategy.calculateRange(frames);
 
     if (removeStart >= removeEnd || removeStart >= frames.size()) {
         return; 
     }
 
-    std::vector<std::unique_ptr<PCMFrame>> newFrames;
+    std::vector<std::unique_ptr<AudioFrame>> newFrames;
     newFrames.reserve(frames.size() - (removeEnd - removeStart));
 
     for (size_t i = 0; i < removeStart; ++i) {
@@ -143,9 +135,9 @@ void PCMFile::merge(const std::string& path) {
     PCMFile other(path);
     other.parse();
     
-    for (const auto& frame : other.getFrames()) {
+    for (const auto& frame : other.frames) {
         std::vector<int16_t> sampleCopy = frame->getSamples();
-        frames.push_back(std::make_unique<PCMFrame>(sampleCopy, frame->getSampleRate(), frame->getChannels()));
+        frames.push_back(std::make_unique<PCMFrame>(sampleCopy, sampleRate, channels));
     }
 }
 
@@ -159,17 +151,58 @@ void PCMFile::applyBassBoost(float gainFactor) {
         }
     }
 }
-
+    
 std::unique_ptr<MP3File> PCMFile::toMP3() const {
     auto mp3File = std::make_unique<MP3File>("");
+
+    lame_t lame = lame_init();
+    if (!lame) return mp3File;
+
+    lame_set_in_samplerate(lame, sampleRate);
+    lame_set_num_channels(lame, channels);
+    lame_set_VBR(lame, vbr_default);
+    lame_init_params(lame);
+
+    std::vector<int16_t> allSamples;
     for (const auto& frame : frames) {
         const auto& pcmSamples = frame->getSamples();
+        allSamples.insert(allSamples.end(), pcmSamples.begin(), pcmSamples.end());
+    }
 
-        // PLACEHOLDER
+    if (allSamples.empty()) {
+        lame_close(lame);
+        return mp3File;
+    }
 
-        std::vector<uint8_t> encodedLayer3Data;
+    int maxMp3Size = 7200 + static_cast<int>(allSamples.size() / channels * 1.25);
+    std::vector<uint8_t> mp3Buffer(maxMp3Size);
+
+    int numSamplesPerChannel = static_cast<int>(allSamples.size() / channels);
+
+    int bytesEncoded = lame_encode_buffer_interleaved(
+        lame,
+        const_cast<int16_t*>(allSamples.data()),
+        numSamplesPerChannel,
+        mp3Buffer.data(),
+        maxMp3Size
+    );
+
+    int flushBytes = lame_encode_flush(
+        lame,
+        mp3Buffer.data() + bytesEncoded,
+        maxMp3Size - bytesEncoded
+    );
+
+    int totalBytes = bytesEncoded + flushBytes;
+    lame_close(lame);
+
+    if (totalBytes > 0) {
+        mp3Buffer.resize(totalBytes);
+
+        auto layer3Frame = std::make_unique<Layer3Frame>();
+        layer3Frame->setData(std::move(mp3Buffer));
         
-        // PLACEHOLDER
+        mp3File->addFrame(std::move(layer3Frame));
     }
 
     return mp3File;

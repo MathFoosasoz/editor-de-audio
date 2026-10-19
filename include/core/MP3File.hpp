@@ -13,16 +13,22 @@
 class MP3File : public MPEGFile {
 private:
     ID3v2Tag id3Tag;
-    std::vector<std::unique_ptr<AudioFrame>> frames;
 
 public:
     explicit MP3File(const std::string& path);
     void parse() override;
-    void save(const std::string& outputPath) const;
-    size_t getFrameCount() const;
+    void save(const std::string& outputPath) const override;
+    size_t getFrameCount() const override;
     
-    void applyRange(const RangeStrategy& strategy);
-    void applyCut(const RangeStrategy& strategy);
-    void merge(const std::string& path);
+    void applyRange(const RangeStrategy& strategy) override;
+    void applyCut(const RangeStrategy& strategy) override;
+    void merge(const std::string& path) override;
+    void applyBassBoost(float gain) override;
+    
     std::unique_ptr<PCMFile> toPCM() const;
+    void addFrame(std::unique_ptr<AudioFrame> frame) override;
+    
+    const std::vector<std::unique_ptr<AudioFrame>>& getFrames() const {
+        return frames;
+    }
 };

@@ -165,3 +165,7 @@ void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
         }
     }
 }
+
+void Layer3Frame::setData(std::vector<uint8_t> newData) {
+    data = std::move(newData);
+}
