@@ -18,12 +18,14 @@ void MP3File::parse() {
         open();
     }
 
+    // tamanho do arquivo
     fileStream.seekg(0, std::ios::end);
     std::streamsize fileSize = fileStream.tellg();
     fileStream.seekg(0, std::ios::beg);
 
     id3Tag.parse(fileStream);
 
+    // loop que extraí todos os frames
     while (fileStream.tellg() < fileSize) {
         if (fileSize - fileStream.tellg() < 4) {
             break;
@@ -115,6 +117,7 @@ void MP3File::applyCut(const RangeStrategy& strategy) {
     }
 }
 
+// Une um novo arquivo no fim do arquivo atual já aberto
 void MP3File::merge(const std::string& path) {
     MP3File other(path);
     other.parse();
@@ -128,6 +131,13 @@ void MP3File::merge(const std::string& path) {
     }
     other.frames.clear();
 }
+
+void MP3File::addFrame(std::unique_ptr<AudioFrame> frame) {
+    frames.push_back(std::move(frame));
+}
+
+// Implementação dessa biblioteca com auxílio da IA
+// Usa a biblioteca minimp3.h header only para o decoder MP3 -> PCM
 std::unique_ptr<PCMFile> MP3File::toPCM() const {
     auto pcmFile = std::make_unique<PCMFile>(44100, 2);
 
@@ -163,8 +173,4 @@ void MP3File::applyBassBoost(float gain) {
     auto newMp3File = pcmFile->toMP3();
     
     this->frames = std::move(newMp3File->frames);
-}
-
-void MP3File::addFrame(std::unique_ptr<AudioFrame> frame) {
-    frames.push_back(std::move(frame));
 }

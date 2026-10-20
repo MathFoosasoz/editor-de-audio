@@ -42,6 +42,7 @@ CommandDispatcher::CommandDispatcher() {
         auto audio = createAudioFile(v[1]);
         audio->parse();
         
+        // default frames se não houver argumento de unidade
         std::string unit = (c > 4) ? v[4] : "frames";
         double val = std::stod(v[3]);
 

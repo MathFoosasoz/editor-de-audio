@@ -1,3 +1,6 @@
 build/
 audio_files/
 *.mp3
+error_cases/
+debug/
+output_audio/

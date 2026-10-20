@@ -1,11 +1,11 @@
 #pragma once
-#pragma once
 
 #include "RangeStrategy.hpp"
 #include <utility>
 #include <stdexcept>
 
-// Corta um aúdio em um certo número de segundos. Isso funciona universalmente para qualquer formato de arquivo, já que o parâmetro passado é o tipo abstrato "AudioFrame"
+// Corta um pedaço do áudio em um certo intervalo de segundos ou frames, depois une os dois pontos. 
+// Isso funciona para qualquer formato de arquivo, já que o parâmetro passado é o tipo abstrato "AudioFrame"
 class CutStrategy : public RangeStrategy {
 private:
     double startParam;

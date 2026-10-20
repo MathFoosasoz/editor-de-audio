@@ -16,7 +16,12 @@ void PCMFile::parse() {
         open();
     }
 
+    if (!fileStream.is_open()) {
+        throw FileOpenException(filePath);
+    }
+
     char header[44];
+
     fileStream.read(header, 44);
     if (!fileStream || fileStream.gcount() < 44) {
         throw InvalidHeaderException("Header de WAV inválido ou incompleto.");
@@ -49,6 +54,8 @@ void PCMFile::parse() {
         frames.push_back(std::make_unique<PCMFrame>(std::move(frameSamples), sampleRate, channels));
     }
 }
+
+// Uso ruim de magic numbers do arquivo WAV
 
 void PCMFile::save(const std::string& outputPath) const {
     std::ofstream outFile(outputPath, std::ios::binary);
@@ -141,6 +148,8 @@ void PCMFile::merge(const std::string& path) {
     }
 }
 
+// Essa implementação não faz "bass-boost" de verdade, só amplifica todas as frequências igualmente no tempo
+// O verdadeiro bass boost precisaria da implementação da transformada de Fourier para mudança para o domínio da frequência
 void PCMFile::applyBassBoost(float gainFactor) {
     for (auto& frame : frames) {
         for (auto& sample : frame->getSamples()) {
@@ -152,6 +161,9 @@ void PCMFile::applyBassBoost(float gainFactor) {
     }
 }
     
+// Integração dessa biblíoteca com auxílio da IA
+// Usa a biblioteca Lame para o Encoder de MP3 -> PCM
+// Essa conversão é não-trivial e seria muito fora do escopo do trabalho
 std::unique_ptr<MP3File> PCMFile::toMP3() const {
     auto mp3File = std::make_unique<MP3File>("");
 

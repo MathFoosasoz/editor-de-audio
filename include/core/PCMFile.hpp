@@ -28,6 +28,10 @@ public:
     void applyCut(const RangeStrategy& strategy) override;
     void merge(const std::string& path) override;
     void addFrame(std::unique_ptr<AudioFrame> frame) override;
+    std::unique_ptr<PCMFile> toPCM() const override {
+        auto copy = std::make_unique<PCMFile>(sampleRate, channels);
+        return copy;
+    }
 
     void applyBassBoost(float gainFactor);
 

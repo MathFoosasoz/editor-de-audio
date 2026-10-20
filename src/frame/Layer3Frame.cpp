@@ -10,6 +10,7 @@ void Layer3Frame::parse(std::ifstream& file) {
         throw UnexpectedEOFException();
     }
 
+    // transforma os 4 bytes do header do frame em um uint 32 bits
     uint32_t h = (static_cast<uint8_t>(headerBytes[0]) << 24) |
                  (static_cast<uint8_t>(headerBytes[1]) << 16) |
                  (static_cast<uint8_t>(headerBytes[2]) << 8)  |
@@ -86,6 +87,7 @@ void Layer3Frame::write(std::ofstream& file) const {
 const std::vector<uint8_t>& Layer3Frame::getData() const {
     return data;
 }
+
 bool Layer3Frame::hasXingHeader() const {
     if (data.size() < 40) return false;
 
@@ -113,6 +115,9 @@ bool Layer3Frame::hasXingHeader() const {
     return false;
 }
 
+// Função obrigatória para manter o arquivo de output MP3 funcionando em tocadores de áudio após as modificações
+// Usa vários magic numbers de deslocamento que nos baseamos de outra implementação
+// O ideal seria substituir os magic numbers no futuro usando um arquivo de constantes
 void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
     if (data.size() < 40) return;
 
