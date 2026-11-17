@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <cstddef>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <memory>
@@ -11,6 +12,7 @@
 // declarações p/ compilação
 class RangeStrategy;
 class PCMFile;
+class FrequencyEffect;
 
 // Tipo pai abstrato de arquivo de aúdio
 class AudioFile {
@@ -36,6 +38,9 @@ public:
     virtual void addFrame(std::unique_ptr<AudioFrame> frame) = 0;
     virtual void applyBassBoost(float gain) {
             throw std::invalid_argument("Bass boost não é suportado para este formato.");
+    }
+    virtual void applyFrequencyEffect(const FrequencyEffect&) {
+        throw std::invalid_argument("Efeitos de frequência não são suportados para este formato.");
     }
 
     virtual std::unique_ptr<PCMFile> toPCM() const = 0;  

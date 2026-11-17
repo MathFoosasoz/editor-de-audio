@@ -2,6 +2,8 @@
 #include "../../include/core/AudioFileFactory.hpp"
 #include "../../include/exceptions/AudioExceptions.hpp"
 #include "../../include/core/MP3File.hpp"
+#include "../../include/dsp/FrequencyProcessor.hpp"
+#include "../../include/strategy/FrequencyFilter.hpp"
 #include "../3rdparty/lame/lame.h"
 
 #include <fstream>
@@ -276,16 +278,21 @@ std::vector<int16_t> PCMFile::convertSamples(int targetSampleRate, int targetCha
     return resampled;
 }
 
-// Essa implementação não faz "bass-boost" de verdade, só amplifica todas as frequências igualmente no tempo
-// O verdadeiro bass boost precisaria da implementação da transformada de Fourier para mudança para o domínio da frequência
 void PCMFile::applyBassBoost(float gainFactor) {
+    applyFrequencyEffect(FrequencyFilter(FrequencyFilter::Mode::BassBoost, FrequencyFilter::bassCutoffHz, gainFactor));
+}
+
+void PCMFile::applyFrequencyEffect(const FrequencyEffect& effect) {
+    const FrequencyProcessor processor(sampleRate, effect);
+    auto samples = convertSamples(sampleRate, channels);
+    processor.apply(samples, channels);
+
+    // A janela da FFT atravessa frames. A saída mantém a divisão original em frames.
+    auto nextSample = samples.cbegin();
     for (auto& frame : frames) {
-        for (auto& sample : frame->getSamples()) {
-            int32_t boosted = static_cast<int32_t>(sample * gainFactor);
-            if (boosted > 32767) boosted = 32767;
-            if (boosted < -32768) boosted = -32768;
-            sample = static_cast<int16_t>(boosted);
-        }
+        auto& frameSamples = frame->getSamples();
+        std::copy_n(nextSample, frameSamples.size(), frameSamples.begin());
+        nextSample += frameSamples.size();
     }
 }
     

@@ -4,6 +4,8 @@
 #include "../../include/strategy/FrameRangeStrategy.hpp"
 #include "../../include/strategy/SecondRangeStrategy.hpp"
 #include "../../include/strategy/CutStrategy.hpp"
+#include "../../include/strategy/FrequencyFilter.hpp"
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
@@ -21,6 +23,19 @@ static std::unique_ptr<AudioFile> openAudioFileForEdit(const std::string& path, 
     return audio;
 }
 
+static float parseEffectValue(const char* text, const char* argument) {
+    size_t parsed;
+    float value;
+    const std::string error = std::string("Valor inválido para ") + argument + ".";
+    try {
+        value = std::stof(text, &parsed);
+    } catch (const std::logic_error&) {
+        throw std::invalid_argument(error);
+    }
+    if (text[parsed] != '\0' || !std::isfinite(value)) throw std::invalid_argument(error);
+    return value;
+}
+
 CommandDispatcher::CommandDispatcher() {
     commands["help"] = [this](int c, char* v[]) {
         std::cout << "\nComandos:\n"
@@ -31,9 +46,13 @@ CommandDispatcher::CommandDispatcher() {
                   << "  cut <input> <output> <start> <duration> [frames|seconds]\n"
                   << "  merge <input1> <input2> <output>\n"
                   << "  bass-boost <input> <output> <gain>\n"
+                  << "  low-pass <input> <output> <cutoff_hz>\n"
+                  << "  high-pass <input> <output> <cutoff_hz>\n"
                   << "  help\n"
                   << "  exit / quit\n\n"
-                  << "Use .wav ou .mp3 em cada entrada e na saída.\n\n";
+                  << "Use .wav ou .mp3 em cada entrada e na saída.\n"
+                  << "Bass boost usa ganho linear (1 mantém o nível) e corte em "
+                  << FrequencyFilter::bassCutoffHz << " Hz.\n\n";
     };
 
     commands["exit"] = [this](int c, char* v[]) {
@@ -133,14 +152,28 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["bass-boost"] = [](int c, char* v[]) {
         if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
+        float gain = parseEffectValue(v[3], "o ganho");
         auto audio = openAudioFileForEdit(v[1], v[2]);
 
-        float gain = std::stof(v[3]);
         audio->applyBassBoost(gain);
 
         audio->save(v[2]);
         std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
     };
+
+    auto registerFilter = [this](const std::string& command, FrequencyFilter::Mode mode) {
+        commands[command] = [command, mode](int c, char* v[]) {
+            if (c < 4) throw std::invalid_argument("Uso: " + command + " <input> <output> <cutoff_hz>");
+            const FrequencyFilter filter(mode, parseEffectValue(v[3], "a frequência de corte"));
+            auto audio = openAudioFileForEdit(v[1], v[2]);
+
+            audio->applyFrequencyEffect(filter);
+            audio->save(v[2]);
+            std::cout << "Aplicado " << command << " e salvo para " << v[2] << "\n";
+        };
+    };
+    registerFilter("low-pass", FrequencyFilter::Mode::LowPass);
+    registerFilter("high-pass", FrequencyFilter::Mode::HighPass);
 }
 
 void CommandDispatcher::execute(int argc, char* argv[]) {

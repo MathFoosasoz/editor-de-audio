@@ -7,6 +7,7 @@
 #include "../../include/frame/Layer3Frame.hpp"
 #include "../../include/frame/PCMFrame.hpp"
 #include "../../include/core/PCMFile.hpp"
+#include "../../include/strategy/FrequencyFilter.hpp"
 #include "../../include/3rdparty/minimp3_ex.h"
 
 #include <fstream>
@@ -211,13 +212,12 @@ std::unique_ptr<PCMFile> MP3File::toPCM() const {
 }
 
 void MP3File::applyBassBoost(float gain) {
-    
+    applyFrequencyEffect(FrequencyFilter(FrequencyFilter::Mode::BassBoost, FrequencyFilter::bassCutoffHz, gain));
+}
+
+void MP3File::applyFrequencyEffect(const FrequencyEffect& effect) {
     auto pcmFile = toPCM();
-    
-    pcmFile->applyBassBoost(gain);
-    
-    auto newMp3File = pcmFile->toMP3();
-    
-    this->frames = std::move(newMp3File->frames);
+    pcmFile->applyFrequencyEffect(effect);
+    frames = std::move(pcmFile->toMP3()->frames);
     framesEdited = false;
 }

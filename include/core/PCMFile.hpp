@@ -32,6 +32,7 @@ public:
     std::unique_ptr<PCMFile> toPCM() const override;
 
     void applyBassBoost(float gainFactor) override;
+    void applyFrequencyEffect(const FrequencyEffect& effect) override;
 
     std::unique_ptr<MP3File> toMP3() const;
 };
