@@ -4,6 +4,7 @@
 #include "MPEGFile.hpp"
 #include <vector>
 #include <memory>
+#include <istream>
 #include "../frame/AudioFrame.hpp"
 #include "../metadata/ID3v2Tag.hpp"
 #include "../strategy/RangeStrategy.hpp"
@@ -13,9 +14,11 @@
 class MP3File : public MPEGFile {
 private:
     ID3v2Tag id3Tag;
+    bool framesEdited = false;
 
 public:
     explicit MP3File(const std::string& path);
+    explicit MP3File(std::istream& encoded);
     void parse() override;
     void save(const std::string& outputPath) const override;
     size_t getFrameCount() const override;

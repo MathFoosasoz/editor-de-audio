@@ -9,6 +9,18 @@
 #include <memory>
 #include <sstream>
 
+static std::unique_ptr<AudioFile> openAudioFileForEdit(const std::string& path, const std::string& outputPath) {
+    const auto outputFormat = getAudioFormat(outputPath);
+    auto audio = createAudioFile(path);
+    audio->parse();
+
+    // Para saída WAV, decodifica antes da edição para preservar as amostras nas emendas do MP3.
+    if (outputFormat == AudioFormat::Wav && getAudioFormat(path) == AudioFormat::Mp3) {
+        return audio->toPCM();
+    }
+    return audio;
+}
+
 CommandDispatcher::CommandDispatcher() {
     commands["help"] = [this](int c, char* v[]) {
         std::cout << "\nComandos:\n"
@@ -20,7 +32,8 @@ CommandDispatcher::CommandDispatcher() {
                   << "  merge <input1> <input2> <output>\n"
                   << "  bass-boost <input> <output> <gain>\n"
                   << "  help\n"
-                  << "  exit / quit\n\n";
+                  << "  exit / quit\n\n"
+                  << "Use .wav ou .mp3 em cada entrada e na saída.\n\n";
     };
 
     commands["exit"] = [this](int c, char* v[]) {
@@ -39,8 +52,7 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["trim-start"] = [](int c, char* v[]) {
         if (c < 4) throw std::invalid_argument("Uso: trim-start <input> <output> <value> [frames|seconds]");
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
+        auto audio = openAudioFileForEdit(v[1], v[2]);
         
         // default frames se não houver argumento de unidade
         std::string unit = (c > 4) ? v[4] : "frames";
@@ -60,8 +72,7 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["trim-end"] = [](int c, char* v[]) {
         if (c < 4) throw std::invalid_argument("Uso: trim-end <input> <output> <value> [frames|seconds]");
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
+        auto audio = openAudioFileForEdit(v[1], v[2]);
         
         std::string unit = (c > 4) ? v[4] : "frames";
         double val = std::stod(v[3]);
@@ -80,8 +91,7 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["extract"] = [](int c, char* v[]) {
         if (c < 5) throw std::invalid_argument("Uso: extract <input> <output> <start> <duration> [frames|seconds]");
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
+        auto audio = openAudioFileForEdit(v[1], v[2]);
         
         std::string unit = (c > 5) ? v[5] : "frames";
         double start = std::stod(v[3]);
@@ -101,8 +111,7 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["merge"] = [](int c, char* v[]) {
         if (c < 4) throw std::invalid_argument("Uso: merge <input1> <input2> <output>");
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
+        auto audio = openAudioFileForEdit(v[1], v[3]);
         audio->merge(v[2]);
         audio->save(v[3]);
         std::cout << "Uniu arquivos e salvou para " << v[3] << "\n";
@@ -110,8 +119,7 @@ CommandDispatcher::CommandDispatcher() {
 
     commands["cut"] = [](int c, char* v[]) {
         if (c < 5) throw std::invalid_argument("Uso: cut <input> <output> <start> <duration> [frames|seconds]");
-        auto audio = createAudioFile(v[1]);
-        audio->parse();
+        auto audio = openAudioFileForEdit(v[1], v[2]);
         
         std::string unit = (c > 5) ? v[5] : "frames";
         double start = std::stod(v[3]);
@@ -124,16 +132,14 @@ CommandDispatcher::CommandDispatcher() {
     };
 
     commands["bass-boost"] = [](int c, char* v[]) {
-    if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
-    
-    auto audio = createAudioFile(v[1]);
-    audio->parse();
-    
-    float gain = std::stof(v[3]);
-    audio->applyBassBoost(gain);
-    
-    audio->save(v[2]);
-    std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
+        if (c < 4) throw std::invalid_argument("Uso: bass-boost <input> <output> <gain_factor>");
+        auto audio = openAudioFileForEdit(v[1], v[2]);
+
+        float gain = std::stof(v[3]);
+        audio->applyBassBoost(gain);
+
+        audio->save(v[2]);
+        std::cout << "Aplicado bass boost (gain " << gain << ") e salvo para " << v[2] << "\n";
     };
 }
 

@@ -1,8 +1,13 @@
 #include "../../include/frame/Layer3Frame.hpp"
 #include "../../include/exceptions/AudioExceptions.hpp"
+#include <algorithm>
 #include <cstdint>
 
 void Layer3Frame::parse(std::ifstream& file) {
+    parse(static_cast<std::istream&>(file));
+}
+
+void Layer3Frame::parse(std::istream& file) {
     char headerBytes[4];
     file.read(headerBytes, 4);
 
@@ -23,13 +28,14 @@ void Layer3Frame::parse(std::ifstream& file) {
     version = (h >> 19) & 0x3;
     uint32_t layer = (h >> 17) & 0x3;
 
-    if (layer != 1) {
+    if (layer != 1 || version == 1) {
         throw InvalidHeaderException("Não é um frame MPEG Layer III.");
     }
 
     uint32_t bitrateIndex = (h >> 12) & 0xF;
     uint32_t sampleRateIndex = (h >> 10) & 0x3;
     uint32_t paddingBit = (h >> 9) & 0x1;
+    channels = ((h >> 6) & 0x3) == 3 ? 1 : 2;
 
     if (bitrateIndex == 0 || bitrateIndex == 15 || sampleRateIndex == 3) {
         throw InvalidHeaderException("Bitrate ou sample index inválidos.");
@@ -60,7 +66,9 @@ void Layer3Frame::parse(std::ifstream& file) {
         throw InvalidHeaderException("Sample rate inválida.");
     }
 
-    frameSize = (144 * br / sampleRate) + paddingBit;
+    // Layer III usa 1152 amostras em MPEG-1 e 576 em MPEG-2 e MPEG-2.5.
+    const int samplesPerFrame = (version == 3) ? 1152 : 576;
+    frameSize = (samplesPerFrame / 8 * br / sampleRate) + paddingBit;
 
     data.resize(frameSize);
     
@@ -144,14 +152,9 @@ void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
             size_t framesOffset = xingOffset + 8;
             size_t bytesOffset = xingOffset + 12;
 
-            uint32_t flags = (static_cast<uint32_t>(data[flagsOffset]) << 24) |
-                             (static_cast<uint32_t>(data[flagsOffset + 1]) << 16) |
-                             (static_cast<uint32_t>(data[flagsOffset + 2]) << 8)  |
-                             static_cast<uint32_t>(data[flagsOffset + 3]);
-
-            flags |= 0x00000001;
-            flags |= 0x00000002;
-            flags &= ~0x00000004;
+            constexpr uint32_t framesFlag = 0x00000001;
+            constexpr uint32_t bytesFlag = 0x00000002;
+            const uint32_t flags = framesFlag | bytesFlag;
 
             data[flagsOffset]     = (flags >> 24) & 0xFF;
             data[flagsOffset + 1] = (flags >> 16) & 0xFF;
@@ -167,6 +170,9 @@ void Layer3Frame::updateXingHeader(uint32_t totalFrames, uint32_t totalBytes) {
             data[bytesOffset + 1] = (totalBytes >> 16) & 0xFF;
             data[bytesOffset + 2] = (totalBytes >> 8) & 0xFF;
             data[bytesOffset + 3] = totalBytes & 0xFF;
+
+            // A tabela de busca e o padding do arquivo original podem mudar após a edição.
+            std::fill(data.begin() + bytesOffset + sizeof(totalBytes), data.end(), 0);
         }
     }
 }
